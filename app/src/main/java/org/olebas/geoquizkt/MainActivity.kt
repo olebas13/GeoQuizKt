@@ -7,6 +7,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.text.DecimalFormat
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,15 +18,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var questionTextView: TextView
 
     private val questionBank = listOf(
-        Question(R.string.question_australia, true),
-        Question(R.string.question_oceans, true),
-        Question(R.string.question_mideast, false),
-        Question(R.string.question_africa, false),
-        Question(R.string.question_americas, true),
-        Question(R.string.question_asia, true)
+        Question(R.string.question_australia, answer = true, isAnswered = false),
+        Question(R.string.question_oceans, answer = true, isAnswered = false),
+        Question(R.string.question_mideast, answer = false, isAnswered = false),
+        Question(R.string.question_africa, answer = false, isAnswered = false),
+        Question(R.string.question_americas, answer = true, isAnswered = false),
+        Question(R.string.question_asia, answer = true, isAnswered = false)
     )
 
     private var currentIndex = 0
+    private var rightAnswers = 0
+    private var answered = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,10 +47,12 @@ class MainActivity : AppCompatActivity() {
 
         trueButton.setOnClickListener {
             checkAnswer(true)
+            updateQuestion()
         }
 
         falseButton.setOnClickListener {
             checkAnswer(false)
+            updateQuestion()
         }
 
         nextButton.setOnClickListener {
@@ -100,16 +105,45 @@ class MainActivity : AppCompatActivity() {
     private fun updateQuestion() {
         val questionTextResId = questionBank[currentIndex].textResId
         questionTextView.setText(questionTextResId)
+        if (questionBank[currentIndex].isAnswered) {
+            enableButtons(false)
+        } else {
+            enableButtons(true)
+        }
+        if (answered == questionBank.size) {
+            resultToast()
+            answered = 0
+        }
+    }
+
+    private fun enableButtons(isEnable: Boolean) {
+        if (isEnable) {
+            trueButton.isEnabled = true
+            falseButton.isEnabled = true
+        } else {
+            trueButton.isEnabled = false
+            falseButton.isEnabled = false
+        }
     }
 
     private fun checkAnswer(userAnswer: Boolean) {
         val correctAnswer = questionBank[currentIndex].answer
-        val messageResId = if (userAnswer == correctAnswer) {
-            R.string.correct_toast
+        val messageResId: Int
+        if (userAnswer == correctAnswer) {
+            rightAnswers++
+            messageResId = R.string.correct_toast
         } else {
-            R.string.incorrect_toast
+            messageResId = R.string.incorrect_toast
         }
+        answered++
+        questionBank[currentIndex].isAnswered = true
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun resultToast() {
+        val roundNumber: DecimalFormat = DecimalFormat("#0.##")
+        val percent: Double = rightAnswers.toDouble() / questionBank.size.toDouble()
+        Toast.makeText(this, "Result: ${roundNumber.format(percent * 100)}%", Toast.LENGTH_SHORT).show()
     }
 
     companion object {
